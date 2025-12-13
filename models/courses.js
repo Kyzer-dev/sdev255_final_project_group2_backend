@@ -1,6 +1,6 @@
 const db = require("../db")
 
-const User = db.model("Course", {
+const Course = db.model("Course", {
     courseName : {type: String, required: true},
     instrMethod : String,
     slots : {type: Number, min: 1},

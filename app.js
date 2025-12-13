@@ -7,9 +7,9 @@ const bodyParser = require("body-parser")
 const jwt = require('jwt-simple')
 const Song = require("./models/songs")
 const User = require("./models/users")
-const Student = require("./models/student")
-const Instructor = require("./models/instructor")
-const Course = require("./models/course")
+const Student = require("./models/students")
+const Instructor = require("./models/instructors")
+const Course = require("./models/courses")
 var cors = require('cors')
 
 const app = express() // assigns an express server
@@ -18,23 +18,66 @@ app.use(cors()) // needed for same device stuff
 app.use(bodyParser.json())
 app.use(express.json())
 
-router.post("/user", async(req,res)=>{
+const specialInstructorCode = 202520252025
+
+router.post("/new_student", async(req,res)=>{
     if(!req.body.username || !req.body.password){
         res.status(400).json({error: "Missing username or password"})
     }
-    const newUser = await new User ({
+    const newStudent = await new Student ({
         username: req.body.username,
         password: req.body.password,
         status: req.body.status
     })
     
-    try{
-        await newUser.save()
-        res.sendStatus(201)
+    // The following checks for an existing username in the db.
+    let collisionTest = await Student.find({username : req.body.username})
+    if (!collisionTest){
+        try{
+            await newStudent.save()
+            res.sendStatus(201)
+        }
+        catch(err){
+            res.sendStatus(400).send(err)
+        }
     }
-    catch(err){
-        res.sendStatus(400).send(err)
+    else {
+        res.sendStatus(403)
     }
+})
+
+router.post("/new_instructor", async(req,res)=>{
+    if(!req.body.username || !req.body.password){
+        res.sendStatus(400).json({error: "Missing username or password"})
+        return // tutorial didnt have these but these are logically correct
+    }
+
+    if(req.body.specialCode != specialInstructorCode) {
+        res.sendStatus(400).json({error: "Missing valid special code"})
+        return // tutorial didnt have these but these are logically correct
+    }
+
+    const newInstructor = await new Instructor ({
+        username: req.body.username,
+        password: req.body.password,
+        status: req.body.status
+    })
+
+    // The following checks for an existing username in the db.
+    let collisionTest = await Instructor.find({username : req.body.username})
+    if (!collisionTest){
+        try{
+            await newInstructor.save()
+            res.sendStatus(201)
+        }
+        catch(err){
+            res.sendStatus(400).send(err)
+        }
+    }
+    else {
+        res.sendStatus(403)
+    }
+    
 })
 
 router.post("/auth", async(req,res) => {
@@ -43,103 +86,75 @@ router.post("/auth", async(req,res) => {
         return
     }
     
-    let user = await User.findOne({username : req.body.username})
+    if (req.body.type == "student") { // WE NEED A FIELD ON FRONTEND TO TICK STUDENT OR INSTRUCTOR AND PASS THIS!
+        let student = await Student.findOne({username : req.body.username})
 
-    if (!user){
-        res.status(401).json({error: "Bad Username"})
-    }
-    else {
-        if (user.password != req.body.password){
-            res.status(401).json({error:"Bad Password"})
+        if (!student){
+            res.status(401).json({error: "Bad Username"})
         }
-        else{
-            username2 = user.username
-            const token = jwt.encode({username : user.username}, secret)
-            const auth = 1
+        else {
+            if (student.password != req.body.password){
+                res.status(401).json({error:"Bad Password"})
+            }
+            else{
+                username2 = student.username
+                const token = jwt.encode({username : student.username}, secret)
+                const auth = 1
 
-            res.json({
-                username2,
-                token:token,
-                auth:auth
-            })
+                res.json({
+                    username2,
+                    token:token,
+                    auth:auth,
+                    type:"student"
+                })
+            }
         }
     }
+
+    else if (req.body.type = "instructor") { // SAME AS PREVIOUS, FRONT END NEEDS TO PASS TYPE
+        let instructor = await Instructor.findOne({username : req.body.username})
+
+        if (!instructor){
+            res.status(401).json({error: "Bad Username"})
+        }
+        else {
+            if (instructor.password != req.body.password){
+                res.status(401).json({error:"Bad Password"})
+            }
+            else{
+                username2 = instructor.username
+                const token = jwt.encode({username : instructor.username}, secret)
+                const auth = 1
+
+                res.json({
+                    username2,
+                    token:token,
+                    auth:auth,
+                    type:"instructor"
+                })
+            }
+        }
+    }
+
+    
 })
 
-router.get("/status", async(req,res) => {
-    if (!req.headers["x-auth"]) {
-        return res.status(401).json({error: "Missing X-Auth"})
-    }
+// THIS IS COMMENTED OUT BECAUSE I DONT KNOW IF WE NEED IT
 
-    const token = req.headers["x-auth"]
-    try{
-        const decoded = jwt.decode(token,secret)
-
-        let users = User.find({}, "username status")
-        res.json(users)
-    }
-    catch(ex){
-        res.status(401).json({error: "invalid jwt"})
-    }
-})
-
-// ALL OF THE OLD SONG ROUTING CODE FROM THE TUTORIAL. MIGHT BE USEFUL IF SOMETHING DOES NOT WORK.
-
-// // grab songs
-// router.get("/songs", async(req, res) => {
-//     try {
-//         const songs = await Song.find({})
-//         res.send(songs)
-//         console.log(songs)
+// router.get("/status", async(req,res) => {
+//     if (!req.headers["x-auth"]) {
+//         return res.status(401).json({error: "Missing X-Auth"})
 //     }
-//     catch (err){
-//         console.log(err)
-//     }
-// })
 
-// router.get("/songs/:id", async(req,res) =>{
+//     const token = req.headers["x-auth"]
 //     try{
-//         const song = await Song.findById(req.params.id)
-//         res.json(song)
-//     }
-//     catch (err){
-//         res.status(400).send(err)
-//     }
-// })
+//         const decoded = jwt.decode(token,secret)
 
-// router.post("/songs", async(req,res) => {
-//     try{
-//         const song = await new Song(req.body)
-//         await song.save()
-//         res.status(201).json(song)
-//         console.log(song)
+//         let users = User.find({}, "username status")
+//         res.json(users)
 //     }
-
-//     catch(err){
-//         res.status(400).send(err)
-//     }
-// })
-
-// router.delete("/songs/:id", async(req,res) => {
-//     try{
-//         const song = await Song.findById(req.params.id)
-//         await Song.deleteOne({_id: song._id})
-//         res.sendStatus(204)
-//     }
-//     catch(err){
-//         res.status(400).send(err)
-//     }
-// })
-
-// BE AWARE THAT IM NOT SURE IF THIS ONE EVER WORKED
-// router.put("/songs/:id", async(req,res) => {
-//     try{
-//         const song = req.body
-//         await Song.updateOne({_id: song._id},song)
-//         res.sendStatus(204)
-//     }
-//     catch(err){
-//         res.status(400).send(err)
+//     catch(ex){
+//         res.status(401).json({error: "invalid jwt"})
 //     }
 // })
 
