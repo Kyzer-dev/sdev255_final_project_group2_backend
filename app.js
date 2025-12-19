@@ -140,23 +140,24 @@ router.post("/auth", async(req,res) => {
 })
 
 // THIS IS COMMENTED OUT BECAUSE I DONT KNOW IF WE NEED IT
+//I believe this is related to authorization encryption - AAS
 
-// router.get("/status", async(req,res) => {
-//     if (!req.headers["x-auth"]) {
-//         return res.status(401).json({error: "Missing X-Auth"})
-//     }
+ router.get("/status", async(req,res) => {
+    if (!req.headers["x-auth"]) {
+         return res.status(401).json({error: "Missing X-Auth"})
+    }
 
-//     const token = req.headers["x-auth"]
-//     try{
-//         const decoded = jwt.decode(token,secret)
+     const token = req.headers["x-auth"]
+     try{
+         const decoded = jwt.decode(token,secret)
 
-//         let users = User.find({}, "username status")
-//         res.json(users)
-//     }
-//     catch(ex){
-//         res.status(401).json({error: "invalid jwt"})
-//     }
-// })
+         let users = User.find({}, "username status")
+         res.json(users)
+     }
+     catch(ex){
+        res.status(401).json({error: "invalid jwt"})
+     }
+ })
 
 // grab courses
 router.get("/courses", async(req, res) => {
