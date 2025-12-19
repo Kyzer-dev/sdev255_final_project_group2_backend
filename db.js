@@ -1,4 +1,4 @@
 const mongoose = require("mongoose")
-mongoose.connect("mongodb+srv://<db_username>:<db_password>@songdb.mlmiecm.mongodb.net/?appName=songdb")
+mongoose.connect("mongodb+srv://asamadifard:FinalProject1@schooldb.tefffqw.mongodb.net/")
 
 module.exports = mongoose
