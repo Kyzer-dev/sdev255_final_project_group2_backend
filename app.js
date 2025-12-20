@@ -31,7 +31,7 @@ router.post("/new_student", async(req,res)=>{
     })
     
     // The following checks for an existing username in the db.
-    let collisionTest = await Student.find({username : req.body.username})
+    let collisionTest = await Student.findOne({username : req.body.username})
     if (!collisionTest){
         try{
             await newStudent.save()
@@ -64,7 +64,7 @@ router.post("/new_instructor", async(req,res)=>{
     })
 
     // The following checks for an existing username in the db.
-    let collisionTest = await Instructor.find({username : req.body.username})
+    let collisionTest = await Instructor.findOne({username : req.body.username})
     if (!collisionTest){
         try{
             await newInstructor.save()
@@ -185,14 +185,15 @@ router.get("/courses/:id", async(req,res) =>{
 
 router.post("/courses", async(req,res) => {
     try{
+        console.log(req.body)
         const course = await new Course(req.body)
         await course.save()
-        res.status(201).json(course)
+        res.sendStatus(201).json(course)
         console.log(course)
     }
 
     catch(err){
-        res.status(400).send(err)
+        res.sendStatus(400).send(err)
     }
 })
 
