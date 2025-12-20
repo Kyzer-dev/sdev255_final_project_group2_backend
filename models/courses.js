@@ -9,7 +9,8 @@ const Course = db.model("Course", {
     dayOfWeek : [String],
     calStartDate : {type: Date},
     calEndDate : {type: Date},
-    instructor : String
+    instructor : String,
+    description : String
 })
 
 module.exports = Course
